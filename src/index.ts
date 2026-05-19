@@ -1,3 +1,4 @@
+import http from 'http';
 import cron from 'node-cron';
 import { config } from './config';
 import { initDb } from './db';
@@ -5,26 +6,30 @@ import { runNotifier } from './notifier';
 
 async function main(): Promise<void> {
   console.log('[Bot] Starting YouTube-to-Discord notifier...');
-
-  // Validate config (throws if any required env var is missing)
   console.log(`[Bot] Channel ID : ${config.youtubeChannelId}`);
   console.log(`[Bot] Cron       : ${config.pollCron}`);
 
   initDb();
 
-  // Run immediately on startup
+  // Minimal HTTP server so Render detects an open port
+  const port = process.env.PORT ?? '3000';
+  http.createServer((_, res) => {
+    res.writeHead(200);
+    res.end('OK');
+  }).listen(port, () => {
+    console.log(`[Bot] Health check listening on port ${port}`);
+  });
+
   await runNotifier();
 
-  // Schedule recurring polls
   const task = cron.schedule(config.pollCron, async () => {
     await runNotifier();
   });
 
-  console.log('[Bot] Scheduler started. Press Ctrl+C to stop.');
+  console.log('[Bot] Scheduler started.');
 
-  // Graceful shutdown
   function shutdown(signal: string): void {
-    console.log(`\n[Bot] Received ${signal}. Shutting down gracefully...`);
+    console.log(`\n[Bot] Received ${signal}. Shutting down...`);
     task.stop();
     process.exit(0);
   }
