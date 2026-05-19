@@ -21,9 +21,9 @@ export async function runNotifier(): Promise<void> {
   const firstRun = isFirstRun();
 
   if (firstRun) {
-    console.log('[Notifier] First run detected — seeding database without sending notifications.');
+    console.log('[Notifier] First run — seeding database without sending notifications.');
     for (const upload of uploads) {
-      markVideoSeen(upload.videoId, upload.title, upload.publishedAt, false);
+      markVideoSeen(upload.videoId);
       console.log(`[Notifier] Seeded: "${upload.title}" (${upload.videoId})`);
     }
     return;
@@ -32,20 +32,17 @@ export async function runNotifier(): Promise<void> {
   let notified = 0;
 
   for (const upload of uploads) {
-    if (isVideoSeen(upload.videoId)) {
-      continue;
-    }
+    if (isVideoSeen(upload.videoId)) continue;
 
-    console.log(`[Notifier] New video found: "${upload.title}" (${upload.videoId})`);
+    console.log(`[Notifier] New video: "${upload.title}" (${upload.videoId})`);
 
     try {
       await sendDiscordNotification(upload.videoId, upload.title);
-      markVideoSeen(upload.videoId, upload.title, upload.publishedAt, true);
+      markVideoSeen(upload.videoId);
       console.log(`[Notifier] Notified Discord for: "${upload.title}"`);
       notified++;
     } catch (err) {
-      console.error(`[Notifier] Failed to send Discord notification for "${upload.title}":`, err);
-      // Do NOT mark as seen — will retry on next poll
+      console.error(`[Notifier] Failed to notify for "${upload.title}":`, err);
     }
   }
 
