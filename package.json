@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Notifies a Discord channel when a YouTube channel uploads a new video.",
   "main": "dist/index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "ts-node src/index.ts",
     "build": "tsc",
